@@ -1,3 +1,4 @@
+import datetime
 import math
 
 
@@ -25,8 +26,8 @@ def get_order_data_json(stock_name, capital, ltp, direction):
     data = {
         "symbol": stock_name,
         "qty": quantity,
-        "type": 2,
-        "side": side,
+        "type": 2,  # represents Market Order
+        "side": side,  # 1 => Buy / -1 => Sell
         "productType": "INTRADAY",
         "limitPrice": 0,
         "stopPrice": 0,
@@ -37,3 +38,15 @@ def get_order_data_json(stock_name, capital, ltp, direction):
         "takeProfit": 0
     }
     return data
+
+
+'''
+Method checks if time is not past 11Am. 
+'''
+def is_trade_within_time():
+    now = datetime.datetime.now()
+    today11am = now.replace(hour=11, minute=00, second=0, microsecond=0)
+    if now < today11am:
+        return True
+
+    return False

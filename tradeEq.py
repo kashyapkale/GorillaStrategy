@@ -8,7 +8,6 @@ from fyers_api.Websocket import ws
 from tradeUtils import *
 from loginToFyres import auto_login
 
-
 fyers = None
 this_stock_name = None
 direction = None
@@ -30,7 +29,7 @@ def place_order_at_market_value():
     global avg_ltp
 
     return fyers.place_order(get_order_data_json(this_stock_name,
-                                                 80000,
+                                                 config.capital,
                                                  avg_ltp,
                                                  direction))
 
@@ -67,6 +66,7 @@ def gorilla_strategy():
                 threshold_level = math.floor(order_positions.get("netPositions").get("avgPrice"))
 
         trade_count = trade_count + 1
+        print(trade_count)
 
     else:
         if direction == 3:
@@ -86,7 +86,6 @@ def gorilla_strategy():
                     fyersSocket.unsubscribe(symbol=symbol)
                     is_trade_complete = True
 
-
         elif direction == 6:
             if ltp <= threshold_level - (0.025 * threshold_level):
                 exit_data = {}
@@ -103,7 +102,6 @@ def gorilla_strategy():
                 if trade_count >= 3:
                     fyersSocket.unsubscribe(symbol=symbol)
                     is_trade_complete = True
-
 
 
 def data_feed(msg):
@@ -139,14 +137,17 @@ if __name__ == '__main__':
     avg_ltp = live_data.get(this_stock_name).get("LTP")
     trade_count = 0
     is_trade_taken = False
-    input("Press enter start the trade : ")
 
     current_direction = 0
-    while current_direction != 3 or current_direction != 9:
-        current_direction = int(input("3 for Long, 9 for Short : "))
+    while current_direction != 3 or current_direction != 6:
+        current_direction = int(input("3 for Long, 6 for Short : "))
     direction = current_direction
+    input("Press enter start the trade : ")
 
-    while not is_trade_complete:
+    while not is_trade_complete and is_trade_within_time():
         print("Executing the strategy......")
         gorilla_strategy()
 
+    if not is_trade_within_time():
+        exit_data = {}
+        fyers.exit_positions(exit_data)
