@@ -6,37 +6,36 @@ from fyers_api import fyersModel
 from fyers_api import accessToken
 from fyers_api.Websocket import ws
 from tradeUtils import *
-from loginToFyres import auto_login
 
 
-fyers = None
-this_stock_name = None
-direction = None
-avg_ltp = None
-live_data = None
-trade_count = None
-fyresSocket = None
-is_trade_taken = None
-order_response = None
+fyres
+this_stock_name
+direction
+avg_ltp
+live_data
+trade_count
+fyresSocket
+is_trade_taken
+order_response
 is_trade_complete = False
 symbol = []
 threshold_level = 0
 
 
 def place_order_at_market_value():
-    global fyers
+    global fyres
     global this_stock_name
     global direction
     global avg_ltp
 
-    return fyers.place_order(get_order_data_json(this_stock_name,
+    return fyres.place_order(get_order_data_json(this_stock_name,
                                                  80000,
                                                  avg_ltp,
                                                  direction))
 
 
 def gorilla_strategy():
-    global fyers
+    global fyres
     global this_stock_name
     global direction
     global avg_ltp
@@ -59,8 +58,8 @@ def gorilla_strategy():
 
         while not is_order_placed:
             time.sleep(2)
-            order_book = fyers.order_book(data=order_data).get("orderBook")[0]
-            order_positions = fyers.positions()
+            order_book = fyres.order_book(data=order_data).get("orderBook")[0]
+            order_positions = fyres.positions()
             if order_book.get('message') == 'TRADE CONFIRMED' and len(order_positions.get("netPositions")) > 0:
                 is_order_placed = True
                 is_trade_taken = True
@@ -107,14 +106,23 @@ def gorilla_strategy():
 
 
 def data_feed(msg):
-    print('Data : ')
-    print(msg)
     for symbol_data in msg:
         live_data[symbol_data['symbol']] = {"LTP": symbol_data['ltp']}
 
 
 if __name__ == '__main__':
-    access_token = auto_login()
+    session = accessToken.SessionModel(client_id=config.client_id,
+                                       secret_key=config.secret_key,
+                                       redirect_uri=config.redirect_uri,
+                                       response_type='code',
+                                       grant_type='authorization_code')
+    response = session.generate_authcode()
+    print(response)
+    auth_code = input("Enter Auth Code : ")
+    session.set_token(auth_code)
+    response = session.generate_token()
+
+    access_token = response["access_token"]
     print("Access Token : " + access_token)
 
     fyers = fyersModel.FyersModel(client_id=config.client_id, token=access_token)
@@ -122,7 +130,8 @@ if __name__ == '__main__':
 
     print(fyers.funds())
 
-    ws_access_token = f"{config.client_id}:{access_token}"
+    ws_access_token = f"{config.app_id}:{access_token}"
+    print(ws_access_token)
     data_type = "symbolData"
     run_background = False
     symbol = get_stock()

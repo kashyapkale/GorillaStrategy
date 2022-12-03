@@ -3,7 +3,7 @@ import math
 
 def get_stock():
     symbol = []
-    stock_name = input().capitalize()
+    stock_name = input("Enter Stock Name : ").upper()
     symbol.append("NSE:" + stock_name + "-EQ")
     print("Trading in Stock : " + symbol[0])
     return symbol
@@ -16,7 +16,12 @@ def get_avg_ltp(stock_name):
 
 def get_order_data_json(stock_name, capital, ltp, direction):
     quantity = (math.floor(capital / ltp)) * 4
-    side = 1 if direction == 3 else side = -1
+
+    if direction == 3:
+        side = 1
+    else:
+        side = -1
+
     data = {
         "symbol": stock_name,
         "qty": quantity,
@@ -31,3 +36,4 @@ def get_order_data_json(stock_name, capital, ltp, direction):
         "stopLoss": 0,
         "takeProfit": 0
     }
+    return data
