@@ -45,7 +45,7 @@ Method checks if time is not past 11Am.
 '''
 def is_trade_within_time():
     now = datetime.datetime.now()
-    today11am = now.replace(hour=11, minute=00, second=0, microsecond=0)
+    today11am = now.replace(hour=14, minute=00, second=0, microsecond=0)
     if now < today11am:
         return True
 

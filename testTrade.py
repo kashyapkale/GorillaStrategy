@@ -18,7 +18,7 @@ fyers = None
 this_stock_name = None
 direction = None
 avg_ltp = None
-live_data = None
+live_data = {}
 trade_count = None
 fyresSocket = None
 is_trade_taken = None
@@ -29,7 +29,7 @@ threshold_level = 0
 
 
 def place_order_at_market_value():
-    print("PLacing order @ "+avg_ltp)
+    print("PLacing order @ "+str(avg_ltp))
     '''global fyers
     global this_stock_name
     global direction
@@ -62,6 +62,7 @@ def gorilla_strategy():
         #order_data = {}
         #order_data["id"] = order_id
         is_order_placed = False
+        print("Inside Strategy without any Trade Taken :")
 
         while not is_order_placed:
             time.sleep(2)
@@ -75,21 +76,21 @@ def gorilla_strategy():
                 threshold_level = avg_ltp
 
         trade_count = trade_count + 1
-        print(trade_count)
+        print(Fore.BLUE + str(trade_count))
 
     else:
         if direction == 3:
             if ltp >= threshold_level + (0.025 * threshold_level):
                 exit_data = {}
                 #fyers.exit_positions(exit_data)
-                print(Back.GREEN + "Exiting Positions @ "+ltp)
+                print(Back.GREEN + "Exiting Positions @ "+str(ltp))
                 print("Congrats we hit the Target for the day !")
                 fyersSocket.unsubscribe(symbol=symbol)
                 is_trade_complete = True
             elif ltp <= threshold_level - (0.0019 * threshold_level):
                 exit_data = {}
                 # fyers.exit_positions(exit_data)
-                print(Fore.RED+"Exiting Positions @ " + ltp)
+                print(Fore.RED+"Exiting Positions @ " + str(ltp))
                 print("Oops, We hit the stoploss for trade : " + trade_count + "!")
                 direction = 6
                 is_trade_taken = False
@@ -101,14 +102,14 @@ def gorilla_strategy():
             if ltp <= threshold_level - (0.025 * threshold_level):
                 exit_data = {}
                 # fyers.exit_positions(exit_data)
-                print(Back.GREEN + "Exiting Positions @ " + ltp)
+                print(Back.GREEN + "Exiting Positions @ " + str(ltp))
                 print("Congrats we hit the Target for the day :)")
                 fyersSocket.unsubscribe(symbol=symbol)
                 is_trade_complete = True
             elif ltp >= threshold_level + (0.0019 * threshold_level):
                 exit_data = {}
                 # fyers.exit_positions(exit_data)
-                print(Fore.RED + "Exiting Positions @ " + ltp)
+                print(Fore.RED + "Exiting Positions @ " + str(ltp))
                 print("Oops, We hit the stoploss for trade : " + trade_count + "!")
                 direction = 3
                 is_trade_taken = False
@@ -118,10 +119,14 @@ def gorilla_strategy():
 
 
 def data_feed(msg):
-    print('Data : ')
-    print(msg)
+    global live_data
+    global is_trade_taken
+    #print('Data : ')
+    #print(msg)
     for symbol_data in msg:
         live_data[symbol_data['symbol']] = {"LTP": symbol_data['ltp']}
+    if is_trade_taken:
+        print(live_data)
 
 
 if __name__ == '__main__':
@@ -147,20 +152,23 @@ if __name__ == '__main__':
     fyersSocket.subscribe(symbol=symbol, data_type=data_type)
     fyersSocket.keep_running()
 
+    input(Fore.BLUE + "Enter to Continue : ")
     avg_ltp = live_data.get(this_stock_name).get("LTP")
     trade_count = 0
     is_trade_taken = False
 
     current_direction = 0
-    while current_direction != 3 or current_direction != 6:
+    while current_direction != 3 and current_direction != 6:
         current_direction = int(input("3 for Long, 6 for Short : "))
+        print(current_direction)
     direction = current_direction
     input("Press enter start the trade : ")
 
     while not is_trade_complete and is_trade_within_time():
-        print("Executing the strategy......")
+        #print("Executing the strategy......")
         gorilla_strategy()
 
     if not is_trade_within_time():
         exit_data = {}
-        fyers.exit_positions(exit_data)
+        print(Fore.RED + "Exiting Positions @ " + str(live_data.get(this_stock_name).get("LTP")))
+        print("Oops, We crossed the allowed timelimit for the trade !")
